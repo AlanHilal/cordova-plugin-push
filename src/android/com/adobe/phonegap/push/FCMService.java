@@ -449,6 +449,10 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
       .setDeleteIntent(deleteIntent)
       .setAutoCancel(true);
 
+    Bundle notificationExtras = new Bundle();
+    notificationExtras.putBundle(PUSH_BUNDLE, extras);
+    mBuilder.addExtras(notificationExtras);
+
     SharedPreferences prefs = context.getSharedPreferences(
       PushPlugin.COM_ADOBE_PHONEGAP_PUSH,
       Context.MODE_PRIVATE

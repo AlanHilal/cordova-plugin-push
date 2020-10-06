@@ -12,6 +12,7 @@ import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.service.notification.StatusBarNotification;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
@@ -467,6 +468,18 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
           }
         }
       });
+    } else if (GET_NOTIFICATIONS.equals(action)) {
+      cordova.getThreadPool().execute(new Runnable() {
+        public void run () {
+          try {
+            JSONObject result = new JSONObject();
+            result.put("notifications", getNotifications());
+            callbackContext.success(result);
+          } catch (JSONException e) {
+            callbackContext.error(e.getMessage());
+          }
+        }
+      });
     } else {
       Log.e(LOG_TAG, "Invalid action : " + action);
       callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.INVALID_ACTION));
@@ -577,6 +590,24 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
       .getSystemService(Context.NOTIFICATION_SERVICE);
     String appName = this.getAppName();
     notificationManager.cancel(appName, id);
+  }
+
+  private JSONArray getNotifications () throws JSONException {
+    JSONArray notifications = new JSONArray();
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+      return notifications;
+    }
+    
+    final NotificationManager notificationManager = (NotificationManager) cordova.getActivity()
+      .getSystemService(Context.NOTIFICATION_SERVICE);
+    for (StatusBarNotification notification: notificationManager.getActiveNotifications()) {
+      Bundle bundle = notification.getNotification().extras.getBundle(PUSH_BUNDLE);
+      if (bundle != null) {
+        JSONObject json = convertBundleToJson(bundle);
+        if (json != null) notifications.put(json);
+      }
+    }
+    return notifications;
   }
 
   private void subscribeToTopics (JSONArray topics, String registrationToken) {
