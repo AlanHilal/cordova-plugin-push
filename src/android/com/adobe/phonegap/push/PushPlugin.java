@@ -166,17 +166,16 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       final NotificationManager notificationManager = (NotificationManager) cordova.getActivity()
         .getSystemService(Context.NOTIFICATION_SERVICE);
-      List<NotificationChannel> channels = notificationManager.getNotificationChannels();
 
-      for (int i = 0; i < channels.size(); i++) {
-        id = channels.get(i).getId();
-        if (id.equals(DEFAULT_CHANNEL_ID)) {
-          return;
-        }
+      String appName = this.getAppName();
+      NotificationChannel defaultChannel = notificationManager.getNotificationChannel(DEFAULT_CHANNEL_ID);
+      // Check if the default channel already exist and if the name still matches the default name
+      if  (defaultChannel != null && appName.equals(defaultChannel.getName())) {
+        return;
       }
+
       try {
         options.put(CHANNEL_ID, DEFAULT_CHANNEL_ID);
-        String appName = this.getAppName();
         options.putOpt(CHANNEL_DESCRIPTION, appName);
         createChannel(options);
       } catch (JSONException e) {
